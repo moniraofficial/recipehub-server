@@ -45,7 +45,7 @@ async function run() {
 run().catch(console.dir);
 
 
-// 1. Add Recipe POST API
+//  Add Recipe POST API
 app.post("/api/recipes/add", async (req, res) => {
   try {
     console.log("==========================================");
@@ -93,7 +93,7 @@ app.post("/api/recipes/add", async (req, res) => {
 });
 
 
-// 2. Browse Recipes All API
+// Browse Recipes All API
 app.get("/api/recipes/all", async (req, res) => {
   try {
     if (!recipesCollection) {
@@ -116,7 +116,7 @@ app.get("/api/recipes/all", async (req, res) => {
 });
 
 
-// 3. Featured Recipes API (Home Page Section)
+// Featured Recipes API (Home Page Section)
 app.get("/api/recipes/featured", async (req, res) => {
   try {
     if (!recipesCollection) {
