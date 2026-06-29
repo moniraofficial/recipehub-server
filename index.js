@@ -4,7 +4,8 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 const express = require('express');
 const cors = require('cors'); 
 const dotenv = require('dotenv');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 dotenv.config();
 
@@ -92,7 +93,7 @@ app.post("/api/recipes/add", async (req, res) => {
 });
 
 
-
+// 2. Browse Recipes All API
 app.get("/api/recipes/all", async (req, res) => {
   try {
     if (!recipesCollection) {
@@ -102,7 +103,6 @@ app.get("/api/recipes/all", async (req, res) => {
     const { category } = req.query;
     let query = {};
 
- 
     if (category && category !== "All") {
       query = { category: { $in: [category] } }; 
     }
@@ -123,7 +123,6 @@ app.get("/api/recipes/featured", async (req, res) => {
       return res.status(500).json({ error: "Database collection is not ready yet" });
     }
     
-    // সর্বোচ্চ ৪টি ফিচার্ড রেসিপি নিয়ে আসবে
     const featured = await recipesCollection.find({ isFeatured: true }).limit(4).toArray();
     res.status(200).json(featured);
   } catch (error) {
@@ -133,19 +132,46 @@ app.get("/api/recipes/featured", async (req, res) => {
 });
 
 
-//  4. Popular Recipes API (Home Page Section sorted by likesCount)
+
 app.get("/api/recipes/popular", async (req, res) => {
   try {
     if (!recipesCollection) {
       return res.status(500).json({ error: "Database collection is not ready yet" });
     }
 
-    // likesCount অনুযায়ী বড় থেকে ছোট ক্রমানুসারে (Descending) সর্বোচ্চ ৪টি ডেটা আনবে
     const popular = await recipesCollection.find({}).sort({ likesCount: -1 }).limit(4).toArray();
     res.status(200).json(popular);
   } catch (error) {
     console.error("Popular Fetch Error:", error);
     res.status(500).json({ error: "Failed to fetch popular recipes" });
+  }
+});
+
+
+
+app.get("/api/recipes/:id", async (req, res) => {
+  try {
+    if (!recipesCollection) {
+      return res.status(500).json({ error: "Database collection is not ready yet" });
+    }
+
+    const recipeId = req.params.id;
+
+    // মঙ্গোডিবি অবজেক্ট আইডি ভ্যালিডেশন চেক
+    if (!ObjectId.isValid(recipeId)) {
+      return res.status(400).json({ error: "Invalid recipe ID format" });
+    }
+
+    const recipe = await recipesCollection.findOne({ _id: new ObjectId(recipeId) });
+    
+    if (!recipe) {
+      return res.status(404).json({ error: "Recipe not found" });
+    }
+
+    res.status(200).json(recipe);
+  } catch (error) {
+    console.error("Fetch Single Recipe Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
