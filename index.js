@@ -31,19 +31,10 @@ let recipesCollection;
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     
     const database = client.db("recipehub"); 
     recipesCollection = database.collection("recipes");
-
-    await database.command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } catch (error) {
-    console.error("MongoDB connection failed:", error);
-  }
-}
-run().catch(console.dir);
-
 
 //  Add Recipe POST API
 app.post("/api/recipes/add", async (req, res) => {
@@ -174,6 +165,15 @@ app.get("/api/recipes/:id", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+    // await database.command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } catch (error) {
+    console.error("MongoDB connection failed:", error);
+  }
+}
+run().catch(console.dir);
+
 
 
 app.get('/', (req, res) => {
