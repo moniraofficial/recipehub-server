@@ -44,7 +44,7 @@ async function run() {
 run().catch(console.dir);
 
 
-// 🚀 1. Add Recipe POST API
+// 1. Add Recipe POST API
 app.post("/api/recipes/add", async (req, res) => {
   try {
     console.log("==========================================");
@@ -70,13 +70,13 @@ app.post("/api/recipes/add", async (req, res) => {
       recipeName,
       category,
       cuisineType,
-      difficultyLevel: finalDifficulty || "Easy", // ডাটাবেস আর্কিটেকচার অনুযায়ী স্ট্যান্ডার্ডাইজড
-      preparationTime: Number(finalPrepTime), // ডাটাবেস আর্কিটেকচার অনুযায়ী স্ট্যান্ডার্ডাইজড
+      difficultyLevel: finalDifficulty || "Easy", 
+      preparationTime: Number(finalPrepTime), 
       imageURL, 
       ingredients: typeof ingredients === 'string' ? ingredients.split(",").map(i => i.trim()).filter(Boolean) : ingredients,
       instructions: instructions || "",
-      likesCount: 0, // নতুন রেসিপিতে ডিফল্ট লাইক ০ থাকবে
-      isFeatured: false, // ডিফল্টভাবে ফিচার্ড ফলস থাকবে
+      likesCount: 0, 
+      isFeatured: false, 
       status: "Published",
       createdAt: new Date()
     };
@@ -92,7 +92,7 @@ app.post("/api/recipes/add", async (req, res) => {
 });
 
 
-// 🚀 2. Browse All Recipes API (with Category Filter using $in)
+
 app.get("/api/recipes/all", async (req, res) => {
   try {
     if (!recipesCollection) {
@@ -102,7 +102,7 @@ app.get("/api/recipes/all", async (req, res) => {
     const { category } = req.query;
     let query = {};
 
-    // চ্যালেঞ্জ রিকোয়ারমেন্ট অনুযায়ী MongoDB $in ব্যবহার করা হয়েছে
+ 
     if (category && category !== "All") {
       query = { category: { $in: [category] } }; 
     }
@@ -116,7 +116,7 @@ app.get("/api/recipes/all", async (req, res) => {
 });
 
 
-// 🚀 3. Featured Recipes API (Home Page Section)
+// 3. Featured Recipes API (Home Page Section)
 app.get("/api/recipes/featured", async (req, res) => {
   try {
     if (!recipesCollection) {
@@ -133,7 +133,7 @@ app.get("/api/recipes/featured", async (req, res) => {
 });
 
 
-// 🚀 4. Popular Recipes API (Home Page Section sorted by likesCount)
+//  4. Popular Recipes API (Home Page Section sorted by likesCount)
 app.get("/api/recipes/popular", async (req, res) => {
   try {
     if (!recipesCollection) {
