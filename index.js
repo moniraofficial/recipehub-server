@@ -14,7 +14,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors({
-    origin: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    origin: "https://recipehub-sigma-three.vercel.app",
     credentials: true
 }));
 app.use(express.json()); 
