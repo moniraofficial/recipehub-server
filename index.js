@@ -1,50 +1,3 @@
-// const dns = require("node:dns");
-// dns.setServers(["8.8.8.8", "8.8.4.4"]);
-
-
-// const express = require('express');
-
-// const dotenv = require('dotenv');
-
-// const { MongoClient, ServerApiVersion } = require('mongodb');
-
-// dotenv.config();
-
-// const uri = process.env.MONGODB_URI;
-// const app = express()
-// const port = process.env.PORT 
-
-// const client = new MongoClient(uri, {
-//   serverApi: {
-//     version: ServerApiVersion.v1,
-//     strict: true,
-//     deprecationErrors: true,
-//   }
-// });
-
-// async function run() {
-//   try {
-//     // Connect the client to the server	(optional starting in v4.7)
-//     await client.connect();
-//     // Send a ping to confirm a successful connection
-//     await client.db("admin").command({ ping: 1 });
-//     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-//   } finally {
-//     // Ensures that the client will close when you finish/error
-//     await client.close();
-//   }
-// }
-// run().catch(console.dir);
-
-
-// app.get('/', (req, res) => {
-//   res.send('server is running!')
-// })
-
-// app.listen(port, () => {
-//   console.log(`Example app listening on port ${port}`)
-// })
-
 const dns = require("node:dns");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
@@ -91,18 +44,19 @@ async function run() {
 run().catch(console.dir);
 
 
-// 🚀 Add Recipe POST API
+// 🚀 1. Add Recipe POST API
 app.post("/api/recipes/add", async (req, res) => {
   try {
-
     console.log("==========================================");
     console.log("Received Recipe Data from Frontend:", req.body);
     console.log("==========================================");
 
-    const { recipeName, category, cuisineType, difficulty, prepTime, imageURL, ingredients, instructions } = req.body;
+    const { recipeName, category, cuisineType, difficulty, difficultyLevel, prepTime, preparationTime, imageURL, ingredients, instructions } = req.body;
 
-  
-    if (!recipeName || !category || !cuisineType || !imageURL || !ingredients || !prepTime) {
+    const finalPrepTime = prepTime || preparationTime;
+    const finalDifficulty = difficulty || difficultyLevel;
+
+    if (!recipeName || !category || !cuisineType || !imageURL || !ingredients || !finalPrepTime) {
       console.log("❌ Validation Failed: Missing required fields");
       return res.status(400).json({ error: "Required fields are missing!" });
     }
@@ -116,23 +70,82 @@ app.post("/api/recipes/add", async (req, res) => {
       recipeName,
       category,
       cuisineType,
-      difficulty: difficulty || "Easy",
-      prepTime: Number(prepTime),
+      difficultyLevel: finalDifficulty || "Easy", // ডাটাবেস আর্কিটেকচার অনুযায়ী স্ট্যান্ডার্ডাইজড
+      preparationTime: Number(finalPrepTime), // ডাটাবেস আর্কিটেকচার অনুযায়ী স্ট্যান্ডার্ডাইজড
       imageURL, 
       ingredients: typeof ingredients === 'string' ? ingredients.split(",").map(i => i.trim()).filter(Boolean) : ingredients,
       instructions: instructions || "",
+      likesCount: 0, // নতুন রেসিপিতে ডিফল্ট লাইক ০ থাকবে
+      isFeatured: false, // ডিফল্টভাবে ফিচার্ড ফলস থাকবে
+      status: "Published",
       createdAt: new Date()
     };
 
     const result = await recipesCollection.insertOne(newRecipe);
-    
-  
     console.log("🎯 Successfully Inserted into MongoDB:", result);
     
     res.status(201).json({ success: true, message: "Recipe saved to MongoDB!", id: result.insertedId });
   } catch (error) {
     console.error("Database Error:", error);
     res.status(500).json({ error: "Internal Server Error. Failed to save recipe." });
+  }
+});
+
+
+// 🚀 2. Browse All Recipes API (with Category Filter using $in)
+app.get("/api/recipes/all", async (req, res) => {
+  try {
+    if (!recipesCollection) {
+      return res.status(500).json({ error: "Database collection is not ready yet" });
+    }
+
+    const { category } = req.query;
+    let query = {};
+
+    // চ্যালেঞ্জ রিকোয়ারমেন্ট অনুযায়ী MongoDB $in ব্যবহার করা হয়েছে
+    if (category && category !== "All") {
+      query = { category: { $in: [category] } }; 
+    }
+
+    const recipes = await recipesCollection.find(query).sort({ createdAt: -1 }).toArray();
+    res.status(200).json(recipes);
+  } catch (error) {
+    console.error("Browse Fetch Error:", error);
+    res.status(500).json({ error: "Failed to fetch browse page recipes" });
+  }
+});
+
+
+// 🚀 3. Featured Recipes API (Home Page Section)
+app.get("/api/recipes/featured", async (req, res) => {
+  try {
+    if (!recipesCollection) {
+      return res.status(500).json({ error: "Database collection is not ready yet" });
+    }
+    
+    // সর্বোচ্চ ৪টি ফিচার্ড রেসিপি নিয়ে আসবে
+    const featured = await recipesCollection.find({ isFeatured: true }).limit(4).toArray();
+    res.status(200).json(featured);
+  } catch (error) {
+    console.error("Featured Fetch Error:", error);
+    res.status(500).json({ error: "Failed to fetch featured recipes" });
+  }
+});
+
+
+// 🚀 4. Popular Recipes API (Home Page Section sorted by likesCount)
+app.get("/api/recipes/popular", async (req, res) => {
+  try {
+    if (!recipesCollection) {
+      return res.status(500).json({ error: "Database collection is not ready yet" });
+    }
+
+    // likesCount অনুযায়ী বড় থেকে ছোট ক্রমানুসারে (Descending) সর্বোচ্চ ৪টি ডেটা আনবে
+    const popular = await recipesCollection.find({}).sort({ likesCount: -1 }).limit(4).toArray();
+    res.status(200).json(popular);
+  } catch (error) {
+    console.error("Popular Fetch Error:", error);
+    res.status(500).json({ error: "Failed to fetch popular recipes" });
   }
 });
 
